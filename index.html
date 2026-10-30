@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicLens AI - Civic Impact</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033}
+header{background:#102b46;color:white;padding:20px 6%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+header h1{margin:0;font-size:25px}
+header span{color:#49d6b0}
+header p{margin:5px 0;color:#c7d6e5}
+main{max-width:1150px;margin:auto;padding:25px 18px}
+.hero{background:linear-gradient(120deg,#123e5b,#08795a);color:white;padding:28px;border-radius:16px;margin-bottom:22px}
+.hero h2{font-size:27px;margin:0 0 10px}
+.hero p{margin:0;color:#d9f5ed;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:22px}
+.card,.panel{background:white;padding:20px;border-radius:13px;box-shadow:0 4px 16px #102b4610}
+.card small{color:#667085}
+.card h2{font-size:30px;margin:10px 0}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+h3{margin-top:0}
+label{display:block;font-weight:bold;font-size:13px;margin:14px 0 7px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d4dce6;border-radius:8px;font-size:14px}
+textarea{min-height:75px}
+button{width:100%;padding:13px;margin-top:12px;border:0;border-radius:8px;background:#08795a;color:white;font-size:15px;font-weight:bold;cursor:pointer}
+button:hover{background:#066347}
+.secondary{background:#123e5b}
+.result{display:none;margin-top:18px;padding:17px;background:#e9f8f0;border-radius:10px;line-height:1.7}
+.priority{font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{text-align:left;padding:12px 7px;border-bottom:1px solid #e7edf3;font-size:13px}
+th{color:#667085}
+.high{color:#b42318;font-weight:bold}
+.medium{color:#b45309;font-weight:bold}
+.low{color:#08795a;font-weight:bold}
+.note{color:#667085;font-size:12px;line-height:1.5}
+.upload{border:2px dashed #9bb5c9;border-radius:12px;padding:15px;background:#f8fbff}
+#preview{display:none;max-width:100%;max-height:220px;margin:12px auto;border-radius:10px}
+.progressbg{height:12px;background:#e5eaf0;border-radius:10px;overflow:hidden}
+#progress{width:20%;height:12px;background:#08795a;transition:width .3s}
+.badge{display:inline-block;padding:6px 10px;background:#dff8ee;color:#08795a;border-radius:20px;font-weight:bold}
+.mapbox{background:#e3efe9;padding:20px;border-radius:10px;text-align:center;margin-top:12px}
+@media(max-width:750px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.hero h2{font-size:22px}}
+</style>
+</head>
+
+<body>
+
+<header>
+<div>
+<h1>🌍 CivicLens <span>AI</span></h1>
+<p>From Complaints to Action</p>
+</div>
+<div>AI for Civic Impact</div>
+</header>
+
+<main>
+
+<section class="hero">
+<h2>Which civic problem should be fixed first?</h2>
+<p>CivicLens helps authorities understand civic complaints, identify urgent issues, and prioritize action based on danger, community impact, and location.</p>
+</section>
+<section class="stats" id="stats" style="display:none">
+    <div class="card">
+        <small>Total Complaints</small>
+        <h2 id="total">128</h2>
+    </div>
+
+    <div class="card">
+        <small>High Priority</small>
+        <h2 id="urgent">24</h2>
+    </div>
+
+    <div class="card">
+        <small>Today's Repair Capacity</small>
+        <h2 id="capacity">10</h2>
+    </div>
+</section>
+
+<div class="layout">
+
+<section class="panel">
+<h3>📸 Submit a Civic Complaint</h3>
+<p class="note">Upload a photo and provide information about the problem.</p>
+
+<form id="form">
+
+<div class="upload">
+<label>Problem Photo</label>
+<input type="file" id="photo" accept="image/*" required>
+<img id="preview" alt="Complaint photo preview">
+<p class="note">Upload a clear picture of the problem.</p>
+</div>
+
+<label>Problem Type</label>
+<select id="problem" required>
+<option value="">Select problem</option>
+<option>Pothole</option>
+<option>Garbage</option>
+<option>Blocked Drain</option>
+<option>Waterlogging</option>
+<option>Broken Streetlight</option>
+<option>Other</option>
+</select>
+
+<label>Location</label>
+<input id="location" placeholder="Enter street or area" required>
+
+<button type="button" class="secondary" onclick="getLocation()">📍 Use My Current Location</button>
+<p id="locationStatus" class="note">You can enter the location manually or use GPS.</p>
+
+<label>People affected</label>
+<select id="people" required>
+<option value="1">Few people</option>
+<option value="2">Many people</option>
+<option value="3">Large community</option>
+</select>
+
+<label>Near a school, hospital or busy road?</label>
+<select id="critical" required>
+<option value="0">No</option>
+<option value="3">Yes</option>
+</select>
+
+<label>Does it create immediate danger?</label>
+<select id="danger" required>
+<option value="0">No</option>
+<option value="5">Yes</option>
+</select>
+
+<label>Description</label>
+<textarea id="description" placeholder="Describe the problem" required></textarea>
+
+<button type="submit">✨ Analyze & Prioritize</button>
+</form>
+
+<div class="result" id="result">
+<h3>🔎 Complaint Analysis</h3>
+<p id="issue"></p>
+<p id="score"></p>
+<p id="urgency"></p>
+<p id="reason"></p>
+<p id="department"></p>
+<p id="action"></p>
+<p id="duplicate"></p>
+<div class="panel" style="margin-top:15px;background:#f0f8ff">
+<h3>🤖 Civic Action Intelligence</h3>
+
+<p><b>Potential Impact:</b></p>
+<p id="impact"></p>
+
+<p><b>Suggested Response Time:</b></p>
+<p id="responseTime"></p>
+
+<p><b>Recommended Action Plan:</b></p>
+<p id="actionPlan"></p>
+</div>
+</div>
+
+<div class="panel" id="trackingPanel" style="display:none;margin-top:20px">
+<h3>📍 Complaint Tracking</h3>
+<p><b>Complaint ID:</b> <span id="trackID"></span></p>
+<p><b>Status:</b> <span id="trackStatus" class="badge">Submitted</span></p>
+<div class="progressbg"><div id="progress"></div></div>
+<p id="trackMessage" class="note">Your complaint has been submitted.</p>
+<button type="button" class="secondary" onclick="updateTracking()">Update Tracking Status</button>
+</div>
+
+</section>
+
+<section>
+
+<div class="panel">
+<h3>🧠 Priority Decision Engine</h3>
+<p class="note">Sample civic complaints ranked by potential impact.</p>
+<table>
+<thead><tr><th>Problem</th><th>Impact</th><th>Priority</th></tr></thead>
+<tbody>
+<tr><td>Blocked drain near hospital</td><td>Critical</td><td class="high">HIGH</td></tr>
+<tr><td>Large pothole on busy road</td><td>High</td><td class="high">HIGH</td></tr>
+<tr><td>Garbage near school</td><td>High</td><td class="high">HIGH</td></tr>
+<tr><td>Overflowing public bin</td><td>Medium</td><td class="medium">MEDIUM</td></tr>
+<tr><td>Broken streetlight</td><td>Low</td><td class="low">LOW</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h3>📍 Complaint Location</h3>
+<p class="note">The submitted location will be displayed here.</p>
+<div class="mapbox">
+📍
+<p id="maplabel">No complaint location yet</p>
+</div>
+<p class="note">Map display is a prototype. GPS coordinates are captured when permitted.</p>
+</div>
+
+<div class="panel" style="margin-top:20px">
+<h3>💡 Decision Explanation</h3>
+<p class="note">A complaint affecting many people, creating danger, or occurring near a critical location may need attention before a less dangerous issue.</p>
+</div>
+
+</section>
+
+</div>
+</main>
+
+<footer style="text-align:center;padding:25px;color:#8491a2;font-size:12px">
+CivicLens AI • Hackathon Prototype • AI for Civic Impact
+</footer>
+
+<script>
+let trackingStep = 0;
+let complaints = [];
+
+const photo = document.getElementById("photo");
+
+photo.addEventListener("change",function(){
+    const file = this.files[0];
+
+    if(file){
+        document.getElementById("preview").src = URL.createObjectURL(file);
+        let impactText = "";
+let responseText = "";
+let actionPlanText = "";
+
+if (problem === "Pothole") {
+    impactText = "Drivers, pedestrians, and two-wheeler riders may be affected.";
+    actionPlanText = "Inspect the pothole, place warning signs, and schedule road repair.";
+} else if (problem === "Garbage") {
+    impactText = "Nearby residents, pedestrians, and businesses may be affected.";
+    actionPlanText = "Arrange waste collection, clean the affected area, and check for repeated dumping.";
+} else if (problem === "Blocked Drain") {
+    impactText = "Nearby residents and pedestrians may face sanitation and flooding risks.";
+    actionPlanText = "Inspect the drain, remove the blockage, and check the flow of water.";
+} else if (problem === "Waterlogging") {
+    impactText = "Road users, residents, and nearby businesses may be affected.";
+    actionPlanText = "Inspect the waterlogged area, clear drainage, and assess road safety.";
+} else if (problem === "Broken Streetlight") {
+    impactText = "Pedestrians and road users may face reduced visibility at night.";
+    actionPlanText = "Inspect the streetlight and assign electrical maintenance.";
+} else {
+    impactText = "People in the reported area may be affected.";
+    actionPlanText = "Inspect the issue and assign it to the appropriate civic department.";
+}
+
+if (urgency === "HIGH") {
+    responseText = "Urgent inspection recommended — as soon as possible.";
+} else if (urgency === "MEDIUM") {
+    responseText = "Inspection recommended within 24–48 hours.";
+} else {
+    responseText = "Schedule for routine inspection.";
+}
+
+document.getElementById("impact").innerText = impactText;
+document.getElementById("responseTime").innerText = responseText;
+document.getElementById("actionPlan").innerText = actionPlanText;
+        document.getElementById("preview").style.display = "block";
+    }
+});
+
+function getLocation(){
+    const status = document.getElementById("locationStatus");
+
+    if(!navigator.geolocation){
+        status.innerText = "Location is not supported by this browser.";
+        return;
+    }
+
+    status.innerText = "Getting your location...";
+
+    navigator.geolocation.getCurrentPosition(
+        function(position){
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            document.getElementById("location").value =
+                lat.toFixed(5)+", "+lon.toFixed(5);
+
+            status.innerText = "Location captured successfully!";
+        },
+        function(){
+            status.innerText =
+                "Location unavailable. Please enter it manually.";
+        }
+    );
+}
+
+function getDepartment(problem){
+    if(problem==="Pothole") return "Road Department";
+    if(problem==="Garbage") return "Waste Management Department";
+    if(problem==="Blocked Drain" || problem==="Waterlogging")
+        return "Drainage Department";
+    if(problem==="Broken Streetlight") return "Electrical Department";
+    return "General Civic Department";
+}
+
+function startTracking(){
+    trackingStep=0;
+
+    const id="CL-"+Date.now().toString().slice(-6);
+
+    document.getElementById("trackID").innerText=id;
+    document.getElementById("trackStatus").innerText="Submitted";
+    document.getElementById("trackMessage").innerText=
+        "Your complaint has been submitted and is awaiting review.";
+
+    document.getElementById("progress").style.width="20%";
+    document.getElementById("trackingPanel").style.display="block";
+}
+
+function updateTracking(){
+    const statuses=[
+        "Submitted",
+        "Under Review",
+        "Assigned to Department",
+        "Repair In Progress",
+        "Resolved"
+    ];
+
+    const messages=[
+        "Your complaint has been submitted.",
+        "Authorities are reviewing the complaint.",
+        "The complaint has been assigned to a department.",
+        "Repair work is in progress.",
+        "The complaint has been marked as resolved."
+    ];
+
+    const progress=[20,40,60,80,100];
+
+    if(trackingStep<statuses.length-1){
+        trackingStep++;
+    }
+
+    document.getElementById("trackStatus").innerText=statuses[trackingStep];
+    document.getElementById("trackMessage").innerText=messages[trackingStep];
+    document.getElementById("progress").style.width=progress[trackingStep]+"%";
+}
+
+document.getElementById("form").addEventListener("submit",function(e){
+    e.preventDefault();
+
+    const problem=document.getElementById("problem").value;
+    const location=document.getElementById("location").value.trim();
+    const people=Number(document.getElementById("people").value);
+    const critical=Number(document.getElementById("critical").value);
+    const danger=Number(document.getElementById("danger").value);
+    const description=document.getElementById("description").value.trim();
+
+    const score=people+critical+danger;
+
+    let urgency="LOW";
+    let action="Schedule the issue for routine inspection.";
+
+    if(score>=7){
+        urgency="HIGH";
+        action="Prioritize this issue for urgent inspection and action.";
+    }else if(score>=4){
+        urgency="MEDIUM";
+        action="Plan this issue for the next available repair cycle.";
+    }
+
+    const department=getDepartment(problem);
+
+    // Simple demo duplicate detection:
+    // Looks for same problem type and same entered location.
+    const duplicateFound=complaints.some(function(c){
+        return c.problem===problem &&
+               c.location.toLowerCase()===location.toLowerCase();
+    });
+
+    complaints.push({
+        problem:problem,
+        location:location,
+        description:description,
+        urgency:urgency
+    });
+
+    document.getElementById("issue").innerText=
+        "Identified issue: "+problem+" at "+location;
+
+    document.getElementById("score").innerText=
+        "Priority score: "+score+" / 11";
+
+    document.getElementById("urgency").innerText=
+        "Estimated urgency: "+urgency;
+
+    document.getElementById("reason").innerText=
+        "Why: Priority considers danger, people affected, and nearby critical locations.";
+
+    document.getElementById("department").innerText=
+        "Suggested department: "+department;
+
+    document.getElementById("action").innerText=
+        "Recommended action: "+action;
+
+    document.getElementById("duplicate").innerText=
+        duplicateFound
+        ? "⚠ Similar complaint detected for this problem and location."
+        : "No matching complaint found in this demo session.";
+
+    document.getElementById("result").style.display="block";
+document.getElementById("stats").style.display = "grid";
+
+document.getElementById("capacity").innerText = 10;
+    document.getElementById("maplabel").innerText=location;
+
+    document.getElementById("total").innerText=128+complaints.length;
+    document.getElementById("urgent").innerText=24+
+        complaints.filter(c=>c.urgency==="HIGH").length;
+
+    startTracking();
+});
+</script>
+
+</body>
+</html>
